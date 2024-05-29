@@ -38,20 +38,6 @@ class SettingsPage extends StatelessWidget{
                         width: buttonWidth,
                         child: ElevatedButton.icon(
                           onPressed: () {
-                              Navigator.pushNamed(context, '/rebuild');
-                          },
-                          icon: const Icon(Icons.build), // Ícone de edição
-                          label: const Text('Rebuild database'),
-                        ),
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: SizedBox(
-                        height: buttonHeight,
-                        width: buttonWidth,
-                        child: ElevatedButton.icon(
-                          onPressed: () {
                               Navigator.pushNamed(context, '/theme');
                           },
                           icon: const Icon(Icons.refresh), // Ícone de edição
