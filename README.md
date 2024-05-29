@@ -2,7 +2,8 @@
 
 GTGuildRecords is a project aimed at scanning Guardian Tales raid logs and inserting them into a local SQLite3 database. This enables efficient data manipulation for better guild management.
 
-
+![home](assets/images/home_page.jpg) ![print](assets/images/print_page.jpg) 
+![ocr](assets/images/ocr_page.jpg) ![create](assets/images/open_page.jpg)
 
 Overview
 
