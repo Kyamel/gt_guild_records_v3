@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'dart:ui' as ui;
 import 'package:flutter/material.dart';
 import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
@@ -128,6 +129,16 @@ class _OcrPageState extends State<OcrPage> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro executing OCR: $e')),
       );
+    }finally {
+      // Delete the image after OCR processing
+      try {
+        final file = File(image.path);
+        await file.delete();
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error deleting image: $e')),
+        );
+      }
     }
   }
 

@@ -1,6 +1,9 @@
 # gt_guild_records_v3
 
 GTGuildRecords is a project aimed at scanning Guardian Tales raid logs and inserting them into a local SQLite3 database. This enables efficient data manipulation for better guild management.
+
+
+
 Overview
 
 Guardian Tales is a popular mobile game that features various raids where players can team up to defeat powerful enemies. Guilds often participate in these raids, and keeping track of members' participation and performance is crucial for effective guild management. GTGuildRecords automates the process of collecting raid logs and storing them in a database, providing guild leaders with valuable insights into their guild's activities.
@@ -15,9 +18,60 @@ Getting Started
 
 To get started with GTGuildRecords, follow these steps:
 
-    Install Dependencies: Ensure you have Flutter installed on your system along with the required libraries listed in the project's pubspec.yalm file. You can install them using flutter pub get librarie.
+    Install Dependencies: Ensure you have Flutter installed on your system along with the required libraries listed in the project's pubspec.yalm file. You can install them using flutter pub get library.
 
-    Explore the Database: Once the scanning process is complete, explore the database using the in app functionality or SQLite3 tools or any database management software to analyze the collected data.
+    Build Application
+
+    To build the application for different platforms, follow these instructions:
+    Android
+
+    To build an Android APK, ensure you have Android Studio installed. Then, open a terminal in the project directory and type:
+
+    sh
+
+    flutter build apk --release
+
+    Windows
+
+    To build a Windows executable, ensure you have Visual Studio installed. Then, open a terminal in the project directory and type:
+
+    sh
+
+    flutter build windows
+
+        Note: You will need the "Desktop development with C++" workload installed in Visual Studio to build for Windows.
+
+    Additional Platforms
+
+    You can also build the application for other platforms such as macOS, iOS, Linux, or Web. However, please note that these platforms have not been tested.
+
+    macOS:
+
+    sh
+
+    flutter build macos
+
+    iOS:
+
+    sh
+
+    flutter build ios
+
+        Note: Building for iOS requires a Mac with Xcode installed.
+
+    Linux:
+
+    sh
+
+    flutter build linux
+
+    Web:
+
+    sh
+
+    flutter build web
+
+    For detailed instructions on setting up your environment and building for different platforms, please refer to the Flutter documentation.
 
 Contributing
 
