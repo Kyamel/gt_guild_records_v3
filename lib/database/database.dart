@@ -863,7 +863,7 @@ class DatabaseManager {
     // Retorna a lista de listas combinada
     return [
       ...latestSeasonRanking,
-      ...overallRanking,
+      //...overallRanking,
     ];
   }
 
