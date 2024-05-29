@@ -25,6 +25,7 @@ Contributions to GTGuildRecords are welcome! If you have any ideas for improveme
 License
 
 GTGuildRecords is licensed under the GNU Geberal Public v3.0 License (GPL v3.0).
+
 Contact
 
 For any inquiries or support, please contact [Lucas Camelo] at [lucasdosanjoscamelo@gamil.com].
