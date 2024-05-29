@@ -16,7 +16,7 @@ class _ThemePageState extends State<ThemePage> {
   Color? selectedColor;
   bool _isSnackbarVisible = false;
   late String themeMode;
-  final bool _proVersion =  false;
+  final bool _proVersion =  true;
   // Lista de cores para selecionar
   final List<Color> themeColors = [
     Colors.red,
