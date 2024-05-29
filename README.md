@@ -27,15 +27,11 @@ To get started with GTGuildRecords, follow these steps:
 
     To build an Android APK, ensure you have Android Studio installed. Then, open a terminal in the project directory and type:
 
-    sh
-
     flutter build apk --release
 
     Windows
 
     To build a Windows executable, ensure you have Visual Studio installed. Then, open a terminal in the project directory and type:
-
-    sh
 
     flutter build windows
 
@@ -46,8 +42,6 @@ To get started with GTGuildRecords, follow these steps:
     You can also build the application for other platforms such as macOS, iOS, Linux, or Web. However, please note that these platforms have not been tested.
 
     macOS:
-
-    sh
 
     flutter build macos
 
@@ -61,13 +55,9 @@ To get started with GTGuildRecords, follow these steps:
 
     Linux:
 
-    sh
-
     flutter build linux
 
     Web:
-
-    sh
 
     flutter build web
 
