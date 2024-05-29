@@ -29,7 +29,6 @@ migrate_working_dir/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
-/build/
 
 # Symbolication related
 app.*.symbols
@@ -45,3 +44,36 @@ app.*.map.json
 # my ignore list
 .vscode/
 log.txt
+
+# Ignore everything in the build directory
+/build/*
+
+# Except the specific subdirectories
+!/build/app
+!/build/windows
+
+# Ignore everything inside the specific subdirectories
+/build/app/*
+/build/windows/*
+
+# Except the specific sub-subdirectories
+!build/app/outputs
+!build/windows/x64
+
+# Ignore everything inside the specific sub-subdirectories
+/build/app/outputs/*
+/build/windows/x64/*
+
+# Except the specific folders we want to track within the sub-subdirectories
+!build/app/outputs/flutter-apk
+!build/windows/x64/runner
+
+# Ignore everything inside the specific sub-subdirectories
+/build/windows/x64/runner/*
+
+# Except the specific folders we want to track within the sub-subdirectories
+!build/windows/x64/runner/Release
+
+# Ensure all files within the keep subdirectories are tracked
+!build/app/outputs/flutter-apk/**
+!build/windows/x64/runner/Release/**
