@@ -1,3 +1,5 @@
+import 'dart:ffi';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:gt_guild_records_v2/layout/home_page.dart';
@@ -22,7 +24,8 @@ class PrintPageState extends State<PrintPage> {
   bool showBackToMembersButton = false;
   double buttonHeight = 40;
   double buttonWidth = 180;
-  bool _isSnackbarVisible = false; 
+  bool _isSnackbarVisible = false;
+  bool _filterActive = false;
 
   @override
   void didChangeDependencies() {
@@ -89,9 +92,9 @@ class PrintPageState extends State<PrintPage> {
       debugPrint("Erro members in raids: $e");
     }
   }
-  void _updateTopDamageRanking()async{
+  void _updateTopDamageRanking(bool filterActive) async{
    try{
-      final newData = await widget.databaseManager.getTopDamageRanking();
+      final newData = await widget.databaseManager.getTopDamageRanking(filterActive: filterActive);
       setState(() {
         _data = newData;
         showRaidInfoButton = false;
@@ -231,9 +234,28 @@ class PrintPageState extends State<PrintPage> {
                 child: SizedBox(
                   height: buttonHeight,
                   width: buttonWidth,
-                  child: ElevatedButton.icon(
-                    onPressed: _updateTopDamageRanking,
-                    icon: const Icon(Icons.format_list_numbered),
+                  child:ElevatedButton.icon(
+                    onPressed: () => _updateTopDamageRanking(_filterActive),
+                    icon: PopupMenuButton<bool>(
+                      icon: const Icon(Icons.settings),
+                      onSelected: (bool result) {
+                        setState(() {
+                          _filterActive = result;
+                        });
+                      },
+                      itemBuilder: (BuildContext context) => [
+                        CheckedPopupMenuItem<bool>(
+                          value: false,
+                          checked: !_filterActive,
+                          child: const Text('All Members'),
+                        ),
+                        CheckedPopupMenuItem<bool>(
+                          value: true,
+                          checked: _filterActive,
+                          child: const Text('Active Members'),
+                        ),
+                      ],
+                    ),
                     label: const Text('Best Damages'),
                   ),
                 ),
@@ -244,9 +266,9 @@ class PrintPageState extends State<PrintPage> {
                   height: buttonHeight,
                   width: buttonWidth,
                   child: ElevatedButton.icon(
+                    onPressed: () => _showMemberStatsDialog(context),
                     icon: const Icon(Icons.analytics),
                     label: const Text('Member Stats'),
-                    onPressed: () => _showMemberStatsDialog(context),
                   ),
                 ),
               ),
@@ -328,26 +350,26 @@ class PrintPageState extends State<PrintPage> {
                                   ),
                                 ),
                                 if (showRaidInfoButton && index < _data.length - 1)
-                                  IconButton(
-                                    icon: const Tooltip(
-                                      message: 'More info', // Texto explicativo exibido ao segurar o ícone
-                                      child: Icon(Icons.info),
-                                    ),
-                                    onPressed: () {
-                                      _updateRaidStats(raidTitle);
+                                IconButton(
+                                  icon: const Tooltip(
+                                    message: 'More info', // Texto explicativo exibido ao segurar o ícone
+                                    child: Icon(Icons.info),
+                                  ),
+                                  onPressed: () {
+                                    _updateRaidStats(raidTitle);
 
-                                    },
-                                  ),
+                                  },
+                                ),
                                 if (showMemberInfoButtom && index < _data.length - 1)
-                                  IconButton(
-                                    icon: const Tooltip(
-                                      message: 'More info', // Texto explicativo exibido ao segurar o ícone
-                                      child: Icon(Icons.info),
-                                    ),
-                                    onPressed: () {
-                                      _updateMemberStats(memberName);
-                                    },
+                                IconButton(
+                                  icon: const Tooltip(
+                                    message: 'More info', // Texto explicativo exibido ao segurar o ícone
+                                    child: Icon(Icons.info),
                                   ),
+                                  onPressed: () {
+                                    _updateMemberStats(memberName);
+                                  },
+                                ),
                               ],
                             ),
                           );
@@ -395,12 +417,43 @@ class PrintPageState extends State<PrintPage> {
                   Expanded(
                     child: Align(
                       alignment: Alignment.center,
-                      child: FloatingActionButton(
-                        onPressed: () {
-                          _showBottomSheet(context);
+                      child: GestureDetector(
+                        onVerticalDragEnd: (details) {
+                          if (details.primaryVelocity! < 0) {
+                            _showBottomSheet(context); // Chama o método ao deslizar para cima
+                          }
                         },
-                        tooltip: 'Print options',
-                        child: const Icon(Icons.keyboard_double_arrow_up),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(16.0),
+                            color: Theme.of(context).colorScheme.primaryContainer,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.3),
+                                spreadRadius: 1,
+                                blurRadius: 6,
+                                offset: const Offset(0, 3), // changes position of shadow
+                              ),
+                            ],
+                          ),  
+                          width: 180, // largura desejada do botão
+                          child: Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: TextButton(
+                              onPressed: () {
+                                _showBottomSheet(context);
+                              },
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.keyboard_double_arrow_up), // ícone do botão
+                                  SizedBox(width: 8), // espaço entre o ícone e o texto (opcional)
+                                  Text('Print options'), // texto do botão
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
                       ),
                     ),
                   ),

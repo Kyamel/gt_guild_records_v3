@@ -449,10 +449,10 @@ class _OcrPageState extends State<OcrPage> {
                         : Padding(
                           padding: const EdgeInsets.all(4.0),
                           child: TextButton.icon(
-                              onPressed: _pickImage,
-                              icon: const Icon(Icons.image),
-                              label: const Text('Select Image'),
-                            ),
+                            onPressed: _pickImage,
+                            icon: const Icon(Icons.image),
+                            label: const Text('Select Image'),
+                          ),
                         ),
                     ),
                   ),  

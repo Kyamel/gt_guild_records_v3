@@ -621,13 +621,38 @@ class DatabaseManager {
       rethrow;
     }
   }
-  Future<List<List<String>>> getTopDamageRanking() async {
+  Future<List<List<String>>> getTopDamageRanking({bool filterActive = false}) async {
     try {
-      const String sqlGetAllMembers = "SELECT member_id FROM Members;";
+      String sqlGetAllMembers;
+      if (filterActive) {
+        sqlGetAllMembers = """
+          SELECT member_id 
+          FROM Members 
+          WHERE member_id IN (
+            SELECT member_id 
+            FROM MembersInRaids 
+            WHERE raid_id = (
+              SELECT raid_id 
+              FROM Raids 
+              ORDER BY season DESC
+              LIMIT 1
+            )
+          );
+        """;
+        
+      } else {
+        sqlGetAllMembers = "SELECT member_id FROM Members;";
+      }
       List<Map<String, dynamic>> allMembersResult = await _database.rawQuery(sqlGetAllMembers);
       int top = allMembersResult.length;
       List<List<String>> topDamageRanking = [];
-      topDamageRanking.add(['Top $top Best Damages for each member: ']);
+      if(filterActive){
+        topDamageRanking.add(['Top $top Best Damages for each active member: ']);
+      }
+      else{
+        topDamageRanking.add(['Top $top Best Damages for each member: ']); 
+      }
+      
       int ranking = 1;
       // Lista para armazenar temporariamente os resultados antes de ordená-los
       List<Map<String, dynamic>> unsortedRanking = [];
@@ -659,7 +684,12 @@ class DatabaseManager {
       String formatedMaxDamage;
       for (var entry in unsortedRanking) {
         formatedMaxDamage = formatter.format(entry['maxDamage']);
-        topDamageRanking.add(['$ranking.', entry['name'], entry['maxDamage'] = formatedMaxDamage, entry['raidTitle']]);
+        if (filterActive){
+          topDamageRanking.add(['$ranking.', entry['name'], entry['maxDamage'] = formatedMaxDamage]);
+        }
+        else{
+          topDamageRanking.add(['$ranking.', entry['name'], entry['maxDamage'] = formatedMaxDamage, entry['raidTitle']]);
+        }   
         ranking += 1;
       }
       return topDamageRanking;
