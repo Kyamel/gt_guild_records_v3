@@ -82,6 +82,14 @@ class _ExtractPageState extends State<ExtractPage> {
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(12.0),
                     color: Theme.of(context).colorScheme.primaryContainer,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.3),
+                        spreadRadius: 1,
+                        blurRadius: 6,
+                        offset: const Offset(0, 3), // changes position of shadow
+                      ),
+                    ],
                   ),
                   child: Padding(
                     padding: const EdgeInsets.all(4.0),

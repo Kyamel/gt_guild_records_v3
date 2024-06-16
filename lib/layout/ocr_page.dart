@@ -1,11 +1,14 @@
 import 'dart:io';
 import 'dart:ui' as ui;
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_tesseract_ocr/flutter_tesseract_ocr.dart';
 import 'package:gt_guild_records_v2/database/database.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:flutter/services.dart';
+import 'package:path_provider/path_provider.dart';
 import 'home_page.dart';
+import 'package:image/image.dart' as img;
 
 class OcrPage extends StatefulWidget {
   final DatabaseManager databaseManager;
@@ -25,6 +28,8 @@ class _OcrPageState extends State<OcrPage> {
   String raidSeason = 'SXX';
   String raidRanking = 'RXX';
   final _textController = TextEditingController();
+  bool _isProcessing = false;
+  bool _isScaning = false;
 
    @override
   void initState() {
@@ -88,51 +93,117 @@ class _OcrPageState extends State<OcrPage> {
     }
   }
 
+  img.Image _binarizeImage(img.Image src, int threshold) {
+    for (int y = 0; y < src.height; y++) {
+      for (int x = 0; x < src.width; x++) {
+        int pixel = src.getPixel(x, y);
+        int luma = img.getLuminance(pixel);
+        if (luma > threshold) {
+          src.setPixel(x, y, img.getColor(255, 255, 255));
+        } else {
+          src.setPixel(x, y, img.getColor(0, 0, 0));
+        }
+      }
+    }
+    return src;
+  }
+
+  img.Image _increaseContrast(img.Image src, double contrast) {
+    for (int y = 0; y < src.height; y++) {
+      for (int x = 0; x < src.width; x++) {
+        int pixel = src.getPixel(x, y);
+        int r = img.getRed(pixel);
+        int g = img.getGreen(pixel);
+        int b = img.getBlue(pixel);
+
+        r = ((r - 128) * contrast + 128).clamp(0, 255).toInt();
+        g = ((g - 128) * contrast + 128).clamp(0, 255).toInt();
+        b = ((b - 128) * contrast + 128).clamp(0, 255).toInt();
+
+        src.setPixel(x, y, img.getColor(r, g, b));
+      }
+    }
+    return src;
+  }
+
+  img.Image _scaleImage(img.Image src, double scaleFactor) {
+    int newWidth = (src.width * scaleFactor).toInt();
+    int newHeight = (src.height * scaleFactor).toInt();
+    return img.copyResize(src, width: newWidth, height: newHeight);
+  }
+
   Future<void> _pickImage() async {
     final XFile? image = await _picker.pickImage(source: ImageSource.gallery);
+
     if (image != null) {
-      '''
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => ImageCrop(
-            imageFile: image,
-            onCrop: (rect) {
-              _performOcr(image, rect);
-            },
-          ),
-        ),
-      );
-      ''';
-      _performOcr(image);
+      setState(() {
+        _isProcessing = true;
+      });
+      // Pré-processamento da imagem
+      img.Image originalImage = img.decodeImage(File(image.path).readAsBytesSync())!;
+
+      // Convertendo para escala de cinza
+      img.Image grayscaleImage = img.grayscale(originalImage);
+
+      // Aumentando o contraste
+      img.Image contrastImage = _increaseContrast(grayscaleImage, 8.0);
+
+      // Removendo ruído
+      img.Image denoisedImage = img.gaussianBlur(contrastImage, 1);
+
+      // Binarizando a imagem
+      img.Image binarizedImage = _binarizeImage(denoisedImage, 128);
+
+      // Aumentando a escala da imagem
+      img.Image scaledImage = _scaleImage(binarizedImage, 4.0);
+
+      // Salvar a imagem processada temporariamente
+      Directory tempDir = await getTemporaryDirectory();
+      String tempPath = '${tempDir.path}/processed_image.png';
+      File(tempPath).writeAsBytesSync(img.encodePng(scaledImage));
+
+      // Excluindo o arquivo original
+      final file = File(image.path);
+      await file.delete();
+      setState(() {
+        _isProcessing = false;
+      });
+      // Executando OCR
+      _performOcr(tempPath);
     }
   }
 
-  Future<void> _performOcr(XFile image) async {
+  Future<void> _performOcr(String imagePath) async {
     try {
+      setState(() {
+        _isScaning = true;
+      });
       String ocrText = await FlutterTesseractOcr.extractText(
-        image.path,
+        imagePath,
         language: 'eng',
         args: {
-          "psm": "4",
+          "psm": "12",//4|1
           "preserve_interword_spaces": "0",
-          "tessedit_char_blacklist": "@©®&*!{}{[]()+='#-*+",
+          "tessedit_char_blacklist": "@©®&*!{}{[]()+='#-*+|:",
+          "tessedit_char_whitelist": '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ/,.',
         },
       );
       setState(() {
-        List<List<String>> result = _processText(ocrText);
+        List<List<String>> result = _processOcrText(ocrText);
+        //List<List<String>> result = ocrText.split('\n').map((line) => line.split('    ')).toList();
         var aux =_convertListToString(result);
         _text += '\n$aux';
         _textController.text = _text;
+        _isScaning = false;
       });
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro executing OCR: $e')),
       );
-    }finally {
+    } finally {
       // Delete the image after OCR processing
       try {
-        final file = File(image.path);
+        final file = File(imagePath);
         await file.delete();
       } catch (e) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -146,26 +217,81 @@ class _OcrPageState extends State<OcrPage> {
     return data.map((entry) => entry.join('    ')).join('\n');
   }
 
-  List<List<String>> _processText(String data) {
-    List<List<String>> result = [];
-    // Separar linhas
-    List<String> lines = data.trim().split('\n');
-    // Regular expressions para os padrões
-    RegExp nameRegExp = RegExp(r'(\S+)\s+Lv\.(\d+)\s+(\d+/\d+)\s+([\d,]+)');
-    for (var line in lines) {
+ List<List<String>> _processOcrText(String ocrText) {
+  // Dividir o texto em linhas
+  List<String> lines = ocrText.split('\n');
+
+  // Inicializar listas para armazenar nomes, participações e danos
+  List<String> names = [];
+  List<String> participations = [];
+  List<String> damages = [];
+
+  // Regular expressions para os padrões
+  //RegExp nameRegExp = RegExp(r'(\S+)(?=\s+Lv|[.,\+\s]\d)');
+  RegExp nameRegExp = RegExp(r'(\S+)(?=\s?Lv[.,]?\d+)');
+  RegExp damageExp = RegExp(r'\b\d{1,3}(,\d{3})+\b');
+  //RegExp damageExp = RegExp(r'\b\d{6,}\b');
+  RegExp participationExp = RegExp(r'\d+/\d+');
+
+  // Variáveis para acompanhar a última linha processada
+  String? lastName;
+  String? lastParticipation;
+
+  // Iterar sobre as linhas para capturar os valores correspondentes
+  for (var line in lines) {
+    line = line.trim();
+
+    // Verificar se é um nome válido e adicionar à lista de nomes
+    if (nameRegExp.hasMatch(line)) {
       RegExpMatch? match = nameRegExp.firstMatch(line);
       if (match != null) {
-        String name = match.group(1)!.trim();
-        //String level = match.group(2)!;
-        String participation = match.group(3)!.trim();
-        String damage = match.group(4)!.trim();
-
-        result.add([name, participation, damage]);
+        lastName = match.group(0);
       }
     }
+    // Verificar se é uma participação válida e adicionar à lista de participações
+    else if (participationExp.hasMatch(line)) {
+      RegExpMatch? match = participationExp.firstMatch(line);
+      if (match != null) {
+        lastParticipation = match.group(0);
+      }
+    }
+    // Verificar se é um damage válido e adicionar à lista de danos
+    else if (damageExp.hasMatch(line)) {
+      RegExpMatch? match = damageExp.firstMatch(line);
+      if (match != null) {
+        String damage = match.group(0) ?? 'N/A';
+        names.add(lastName ?? 'N/A');
+        participations.add(lastParticipation ?? 'N/A');
+        damages.add(damage);
 
-    return result;
+        // Resetar as variáveis de última linha após adicionar ao resultado
+        lastName = null;
+        lastParticipation = null;
+      }
+    }
   }
+
+  // Verificar se todas as listas têm o mesmo tamanho
+  int length = names.length;
+  if (participations.length != length || damages.length != length) {
+    // Encontrou um mismatch, determinar o novo tamanho
+    int newLength = [names.length, participations.length, damages.length].reduce((value, element) => value > element ? element : value);
+
+    // Cortar as listas para o novo tamanho
+    names = names.sublist(0, newLength);
+    participations = participations.sublist(0, newLength);
+    damages = damages.sublist(0, newLength);
+    length = newLength; // Atualizar o comprimento final para o laço seguinte
+  }
+
+  // Combinar os dados em uma List<List<String>>
+  List<List<String>> result = [];
+  for (int i = 0; i < length; i++) {
+    result.add([names[i], participations[i], damages[i]]);
+  }
+
+  return result;
+}
 
   void _setRaid(String header){
     setState(() {
@@ -284,49 +410,56 @@ class _OcrPageState extends State<OcrPage> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
+                  FloatingActionButton(
+                    tooltip: 'Set raid',
+                    onPressed: () {
+                      _showAddRaidDialog(context);
+                    },
+                    child:  const Icon(Icons.add),
+                  ),
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(16.0),
                       color: Theme.of(context).colorScheme.primaryContainer,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: IconButton(
-                          icon: const Icon(Icons.settings),
-                          tooltip: 'Set raid',
-                          onPressed: () {
-                            _showAddRaidDialog(context);
-                          },
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.3),
+                          spreadRadius: 1,
+                          blurRadius: 6,
+                          offset: const Offset(0, 3), // changes position of shadow
+                        ),
+                      ],
+                    ),  
+                    child: SizedBox(
+                      width: 180,
+                      child: _isProcessing ? const Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            CircularProgressIndicator(),
+                            Text('Processing image...'),
+                          ],
+                        )
+                        : _isScaning ? const Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              CircularProgressIndicator(),
+                              Text('Scanning image...'),
+                            ],
+                          )
+                        : Padding(
+                          padding: const EdgeInsets.all(4.0),
+                          child: TextButton.icon(
+                              onPressed: _pickImage,
+                              icon: const Icon(Icons.image),
+                              label: const Text('Select Image'),
+                            ),
                         ),
                     ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.0),
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: IconButton(
-                        icon: const Icon(Icons.image),
-                        tooltip: 'Select image',
-                        onPressed: _pickImage,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.0),
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                    ),
-                    child:  Padding(
-                      padding: const EdgeInsets.all(4.0),
-                      child: IconButton(
-                        icon: const Icon(Icons.save_alt),
-                        tooltip: 'Save',
-                        onPressed: _saveText,
-                      ),
-                    ),
+                  ),  
+                  FloatingActionButton(
+                    tooltip: 'Save',
+                    onPressed: _saveText,
+                    child: const Icon(Icons.save_alt),
                   ),
                 ],
               ),
@@ -454,7 +587,7 @@ class ImageCrop extends StatefulWidget {
   final XFile imageFile;
   final Function(Rect) onCrop;
 
-  const ImageCrop({required this.imageFile, required this.onCrop});
+  const ImageCrop({super.key, required this.imageFile, required this.onCrop});
 
   @override
   _ImageCropState createState() => _ImageCropState();

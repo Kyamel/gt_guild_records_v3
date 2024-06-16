@@ -277,36 +277,20 @@ class HomePageState extends State<HomePage> {
           ],
         ),
       ),
-      floatingActionButton: _isFabVisible
-        ? Stack( //Weird exception here, but it works anyway, try to fix.
-            alignment: Alignment.bottomRight,
-            children: [
-              Positioned(
-              right: 0.0,
-              bottom: 0.0,
-                child: FloatingActionButton(
-                  onPressed: () {
-                    Navigator.pushNamed(context, '/open');
-                  },
-                  tooltip: 'Open',
-                  child: const Icon(Icons.add),
-                ),
-              ),
-              Positioned(
-              right: 5.0,
-              bottom: 80.0, // Adjust this value to control the distance between the two FABs
-                child: FloatingActionButton(
-                  mini: true,
+      floatingActionButton: 
+             
+              
+          
+             FloatingActionButton(
                   onPressed: () {
                     Navigator.pushNamed(context, '/settings');
                   },
                   tooltip: 'Settings',
                   child: const Icon(Icons.settings),
                 ),
-              ),
-            ],
-          )
-        : null,
+              
+          
+        
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
       bottomNavigationBar: CustomNavigationBar(
         currentIndex: 0,

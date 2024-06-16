@@ -245,7 +245,7 @@ class OpenPageState extends State<OpenPage> {
         ),
       ),
       bottomNavigationBar: CustomNavigationBar(
-        currentIndex: 0,
+        currentIndex: 1,
         onTap: (int index) {
           switch (index) {
             case 0:

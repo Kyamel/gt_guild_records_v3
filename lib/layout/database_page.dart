@@ -20,151 +20,149 @@ class DatabasePage extends StatelessWidget {
           // Define o tamanho fixo do Container como uma fração da largura disponível
           double containerWidth = 380; // 100% da largura disponível
           double containerHeight = 250; // Altura fixa
-          return Padding(
-            padding: const EdgeInsets.only(bottom: 8.0),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: [
-                SizedBox(
-                  width: containerWidth,
-                  height: containerHeight,
-                  child: Container(
-                    padding: const EdgeInsets.all(4.0), // Padding interno do container
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).colorScheme.primaryContainer, // Cor de fundo
-                      borderRadius: BorderRadius.circular(24.0), // Bordas levemente arredondadas
-                    ),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        // Layout para MEMBER
-                        const Text(
-                          'MEMBER',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showAddMemberDialog(context);
-                                },
-                                icon: const Icon(Icons.add), // Ícone de adição
-                                label: const Text('ADD'),
-                              ),
+          return Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              SizedBox(
+                width: containerWidth,
+                height: containerHeight,
+                child: Container(
+                  padding: const EdgeInsets.all(4.0), // Padding interno do container
+                  decoration: BoxDecoration(
+                    color: Theme.of(context).colorScheme.primaryContainer, // Cor de fundo
+                    borderRadius: BorderRadius.circular(24.0), // Bordas levemente arredondadas
+                  ),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      // Layout para MEMBER
+                      const Text(
+                        'MEMBER',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showAddMemberDialog(context);
+                              },
+                              icon: const Icon(Icons.add), // Ícone de adição
+                              label: const Text('ADD'),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showRemoveMemberDialog(context);
-                                },
-                                icon: const Icon(Icons.delete_forever), // Ícone de remoção
-                                label: const Text('REMOVE'),
-                              ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showRemoveMemberDialog(context);
+                              },
+                              icon: const Icon(Icons.delete_forever), // Ícone de remoção
+                              label: const Text('REMOVE'),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showEditMemberDialog(context);
-                                },
-                                icon: const Icon(Icons.edit), // Ícone de edição
-                                label: const Text('EDIT'),
-                              ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showEditMemberDialog(context);
+                              },
+                              icon: const Icon(Icons.edit), // Ícone de edição
+                              label: const Text('EDIT'),
                             ),
-                          ],
-                        ),
-                        // Layout para RAID
-                        const Text(
-                          'RAID',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showAddRaidDialog(context);
-                                },
-                                icon: const Icon(Icons.add), // Ícone de adição
-                                label: const Text('ADD'),
-                              ),
+                          ),
+                        ],
+                      ),
+                      // Layout para RAID
+                      const Text(
+                        'RAID',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showAddRaidDialog(context);
+                              },
+                              icon: const Icon(Icons.add), // Ícone de adição
+                              label: const Text('ADD'),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showRemoveRaidDialog(context);
-                                },
-                                icon: const Icon(Icons.delete_forever), // Ícone de remoção
-                                label: const Text('REMOVE'),
-                              ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showRemoveRaidDialog(context);
+                              },
+                              icon: const Icon(Icons.delete_forever), // Ícone de remoção
+                              label: const Text('REMOVE'),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showEditRaidDialog(context);
-                                },
-                                icon: const Icon(Icons.edit), // Ícone de edição
-                                label: const Text('EDIT'),
-                              ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showEditRaidDialog(context);
+                              },
+                              icon: const Icon(Icons.edit), // Ícone de edição
+                              label: const Text('EDIT'),
                             ),
-                          ],
-                        ),
-                        // Layout para MEMBER IN RAID
-                        const Text(
-                          'MEMBER IN RAID',
-                          style: TextStyle(fontSize: 16),
-                        ),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showAddMemberInRaidDialog(context);
-                                },
-                                icon: const Icon(Icons.add), // Ícone de adição
-                                label: const Text('ADD'),
-                              ),
+                          ),
+                        ],
+                      ),
+                      // Layout para MEMBER IN RAID
+                      const Text(
+                        'MEMBER IN RAID',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showAddMemberInRaidDialog(context);
+                              },
+                              icon: const Icon(Icons.add), // Ícone de adição
+                              label: const Text('ADD'),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showRemoveMemberInRaidDialog(context);
-                                },
-                                icon: const Icon(Icons.delete_forever), // Ícone de remoção
-                                label: const Text('REMOVE'),
-                              ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showRemoveMemberInRaidDialog(context);
+                              },
+                              icon: const Icon(Icons.delete_forever), // Ícone de remoção
+                              label: const Text('REMOVE'),
                             ),
-                            Padding(
-                              padding: const EdgeInsets.all(4.0),
-                              child: ElevatedButton.icon(
-                                onPressed: () {
-                                  _showEditMemberInRaidDialog(context);
-                                },
-                                icon: const Icon(Icons.edit), // Ícone de edição
-                                label: const Text('EDIT'),
-                              ),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: ElevatedButton.icon(
+                              onPressed: () {
+                                _showEditMemberInRaidDialog(context);
+                              },
+                              icon: const Icon(Icons.edit), // Ícone de edição
+                              label: const Text('EDIT'),
                             ),
-                          ],
-                        ),
-                      ],
-                    ),
+                          ),
+                        ],
+                      ),
+                    ],
                   ),
                 ),
-              ],
-            ),
+              ),
+            ],
           );
-  }),
+        
+        }),
       ),
       bottomNavigationBar: CustomNavigationBar(
         currentIndex: 1,
@@ -194,6 +192,13 @@ class DatabasePage extends StatelessWidget {
               break;
           }
         },
+      ),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () {
+          Navigator.pushNamed(context, '/open');
+        },
+        tooltip: 'Open',
+        child: const Icon(Icons.add),
       ),
     );
   }
