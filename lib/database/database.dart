@@ -496,16 +496,27 @@ class DatabaseManager {
     }
   }
 
-  Future<void> updateMemberInRaid(int memberId, int raidId, {int? newDamage, int? newParticipation}) async {
+  Future<void> updateMemberInRaid(int memberId, int raidId, {int? newDamage, String? newParticipation}) async {
     var db = _database;
     var table = _membersInRaid._tableName;
+
+    // Validar e tratar newParticipation
+    int validatedParticipation = validateParticipation(newParticipation ?? 'undefined');
+
+    // Construir o mapa de valores a serem atualizados
     Map<String, dynamic> valuesToUpdate = {};
+
+    // Adicionar damage se for válido
     if (newDamage != null && newDamage > 0) {
       valuesToUpdate['damage'] = newDamage;
     }
-    if (newParticipation != null && newParticipation >= 0 && newParticipation <= 2121) {
-      valuesToUpdate['participation'] = newParticipation;
+
+    // Adicionar participation se for válido
+    if (validatedParticipation >= 0 && validatedParticipation <= 2121) {
+      valuesToUpdate['participation'] = validatedParticipation;
     }
+
+    // Verificar se há algo para atualizar
     if (valuesToUpdate.isNotEmpty) {
       await db.update(
         table,
@@ -515,6 +526,7 @@ class DatabaseManager {
       );
     }
   }
+
   Future<int> getMemberID(String gameName) async{
     return await _members.getID(_database, 'member_id', 'game_name', gameName);
   } 
@@ -707,107 +719,115 @@ class DatabaseManager {
   /// - A list containing: [name, overal_particioation_rate, last_raid_participation, last_raid_title]
   /// Retorna o produto dos números [a] e [b].
   Future<List<List<String>>> getMembersStats(String name, {bool includeRaids = false}) async {
-    var db = _database;
-    final member = await db.query(
-      'Members',
-      columns: ['member_id', 'Game_name', 'discord_name'],
-      where: 'game_name = ?',
-      whereArgs: [name],
-    );
+  var db = _database;
+  final member = await db.query(
+    'Members',
+    columns: ['member_id', 'game_name', 'discord_name'],
+    where: 'game_name = ?',
+    whereArgs: [name],
+  );
 
-    if (member.isEmpty) {
-      throw Exception('Member not found');
-    }
-
-    final memberId = member.first['member_id'] as int;
-    final memberName = member.first['game_name'] as String;
-    final discordName = member.first['discord_name'] as String?;
-
-    // Consulta para obter as informações de participação do membro em raids
-    final memberRaids = await db.query(
-      'MembersInRaids',
-      columns: ['raid_id', 'damage', 'participation'],
-      where: 'member_id = ?',
-      whereArgs: [memberId],
-    );
-
-    if (memberRaids.isEmpty) {
-      throw Exception('No raid participation found for member');
-    }
-
-    int totalParticipation = 0;
-    int totalPossibleParticipation = 0;
-    int totalDamage = 0;
-    int raidsCount = memberRaids.length;
-    int latestRaidSeason = -1;
-    String latestRaidTitle = '';
-
-    List<List<String>> raidDetails = [];
-
-    for (var raid in memberRaids) {
-      final participation = raid['participation'] as int;
-      final raidId = raid['raid_id'] as int;
-      final damage = raid['damage'] as int;
-      final participationDone = participation ~/ 100;
-      final participationPossible = participation % 100;
-      final formatedParticipation = '$participationDone/$participationPossible';
-
-      // Decodifica a participação (primeiro termo / segundo termo)
-      final currentParticipation = participation ~/ 100;
-      final possibleParticipation = participation % 100;
-
-      totalParticipation += currentParticipation;
-      totalPossibleParticipation += possibleParticipation;
-      totalDamage += damage;
-
-      // Consulta para obter o número e título da raid
-      final raidInfo = await db.query(
-        'Raids',
-        columns: ['season', 'title'],
-        where: 'raid_id = ?',
-        whereArgs: [raidId],
-      );
-
-      final raidSeason = raidInfo.first['season'] as int;
-      final raidTitle = raidInfo.first['title'] as String;
-
-      raidDetails.add([raidSeason.toString(), raidTitle, NumberFormat.decimalPattern().format(damage), formatedParticipation]);
-
-      if (raidSeason > latestRaidSeason) {
-        latestRaidSeason = raidSeason;
-        latestRaidTitle = raidTitle;
-      }
-    }
-
-    // Calcula a taxa de participação
-    final overallParticipation = (totalParticipation / totalPossibleParticipation) * 100;
-
-    // Formata o valor de dano com vírgulas a cada três casas
-    final formattedTotalDamage = NumberFormat.decimalPattern().format(totalDamage);
-
-    // Formata a participação total acumulada
-    final formattedTotalParticipation = '$totalParticipation/$totalPossibleParticipation';
-
-    // Cria a lista de resultados
-    List<String> result = [
-      memberName,
-      discordName ?? 'N/A',
-      raidsCount.toString(),
-      '${overallParticipation.toStringAsFixed(2)}%', // Adiciona o símbolo de porcentagem
-      formattedTotalParticipation,
-      formattedTotalDamage,
-    ];
-
-    // Adiciona os detalhes das raids se solicitado
-    List<List<String>> finalResult = [result];
-    if (includeRaids) {
-      // Ordena as raids pelo número da temporada em ordem decrescente
-      raidDetails.sort((a, b) => int.parse(b[0]).compareTo(int.parse(a[0])));
-      finalResult.addAll(raidDetails);
-    }
-
-    return finalResult;
+  if (member.isEmpty) {
+    throw Exception('Member not found');
   }
+
+  final memberId = member.first['member_id'] as int;
+  final memberName = member.first['game_name'] as String;
+  final discordName = member.first['discord_name'] as String?;
+
+  // Consulta para obter as informações de participação do membro em raids
+  final memberRaids = await db.query(
+    'MembersInRaids',
+    columns: ['raid_id', 'damage', 'participation'],
+    where: 'member_id = ?',
+    whereArgs: [memberId],
+  );
+
+  if (memberRaids.isEmpty) {
+    throw Exception('No raid participation found for member');
+  }
+
+  int totalParticipation = 0;
+  int totalPossibleParticipation = 0;
+  int totalDamage = 0;
+  int raidsCount = memberRaids.length;
+  int latestRaidSeason = -1;
+  List<List<String>> raidDetails = [];
+
+  for (var raid in memberRaids) {
+    // Ignora entradas com raid_id = -1
+    final raidId = raid['raid_id'] as int;
+    if (raidId == -1) {
+      debugPrint('Ignoring raid with raid_id = -1');
+      continue;
+    }
+    final participation = raid['participation'] as int;
+    final damage = raid['damage'] as int;
+    final participationDone = participation ~/ 100;
+    final participationPossible = participation % 100;
+    final formatedParticipation = '$participationDone/$participationPossible';
+
+    totalParticipation += participationDone;
+    totalPossibleParticipation += participationPossible;
+    totalDamage += damage;
+
+    // Consulta para obter o número e título da raid
+    final raidInfo = await db.query(
+      'Raids',
+      columns: ['season', 'title'],
+      where: 'raid_id = ?',
+      whereArgs: [raidId],
+    );
+
+    if (raidInfo.isEmpty) {
+      debugPrint('No raid information found for raid_id: $raidId');
+      continue;  // Pula para a próxima iteração se não houver informações da raid
+    }
+
+    final raidSeason = raidInfo.first['season'] as int;
+    final raidTitle = raidInfo.first['title'] as String;
+
+    raidDetails.add([raidSeason.toString(), raidTitle, NumberFormat.decimalPattern().format(damage), formatedParticipation]);
+
+    if (raidSeason > latestRaidSeason) {
+      latestRaidSeason = raidSeason;
+    }
+  }
+
+  // Verificação para garantir que o valor final é lógico
+  if (totalPossibleParticipation == 0) {
+    throw Exception('Invalid total possible participation');
+  }
+
+  // Calcula a taxa de participação
+  final overallParticipation = (totalParticipation / totalPossibleParticipation) * 100;
+
+  // Formata o valor de dano com vírgulas a cada três casas
+  final formattedTotalDamage = NumberFormat.decimalPattern().format(totalDamage);
+
+  // Formata a participação total acumulada
+  final formattedTotalParticipation = '$totalParticipation/$totalPossibleParticipation';
+
+  // Cria a lista de resultados
+  List<String> result = [
+    memberName,
+    discordName ?? 'N/A',
+    raidsCount.toString(),
+    '${overallParticipation.toStringAsFixed(2)}%', // Adiciona o símbolo de porcentagem
+    formattedTotalParticipation,
+    formattedTotalDamage,
+  ];
+
+  // Adiciona os detalhes das raids se solicitado
+  List<List<String>> finalResult = [result];
+  if (includeRaids) {
+    // Ordena as raids pelo número da temporada em ordem decrescente
+    raidDetails.sort((a, b) => int.parse(b[0]).compareTo(int.parse(a[0])));
+    finalResult.addAll(raidDetails);
+  }
+
+  return finalResult;
+}
 
   Future<List<List<String>>> getParticipationRankings() async {
     var db = _database;
@@ -944,5 +964,106 @@ class DatabaseManager {
     } else {
       return 'Unknown';
     }
+  }
+
+  Future<List<List<String>>> membersToUpdateBadges({bool onlyBadgesToUpdate = false}) async {
+    // Step 1: Get the last season number
+    var db = _database;
+    const lastSeasonQuery = '''
+      SELECT MAX(season) as last_season FROM Raids
+    ''';
+    final lastSeasonResult = await db.rawQuery(lastSeasonQuery);
+    final lastSeason = lastSeasonResult.first['last_season'] as int;
+
+    // Step 2: Get member_id and damage in the last raid
+    const lastRaidMembersQuery = '''
+      SELECT member_id, damage FROM MembersInRaids 
+      JOIN Raids ON MembersInRaids.raid_id = Raids.raid_id
+      WHERE Raids.season = ?
+    ''';
+    final lastRaidMembersResult = await db.rawQuery(lastRaidMembersQuery, [lastSeason]);
+
+    // Step 3: Prepare the list to store members that need badge updates
+    List<List<String>> membersToUpdate = [];
+
+    if(onlyBadgesToUpdate){
+      //header
+      membersToUpdate.add(["Members to update badges: "]);
+    }
+    else{
+      //header
+      membersToUpdate.add(["Members that did improve in the last raid: "]);
+    }
+
+    // member count
+    var memberCount = 0;
+
+    // Step 4: Iterate through each member in the last raid
+    for (final member in lastRaidMembersResult) {
+      final memberId = member['member_id'] as int;
+      final currentDamage = member['damage'] as int;
+
+      // Step 5: Get the highest damage in previous raids for this member
+      const highestDamageQuery = '''
+        SELECT MAX(damage) as highest_damage FROM MembersInRaids 
+        JOIN Raids ON MembersInRaids.raid_id = Raids.raid_id
+        WHERE member_id = ? AND Raids.season < ?
+      ''';
+      final highestDamageResult = await db.rawQuery(highestDamageQuery, [memberId, lastSeason]);
+      final highestDamage = (highestDamageResult.first['highest_damage'] ?? 0) as int;
+
+      // Step 6: Compare damages and decide if the badge needs to be updated
+      if(onlyBadgesToUpdate){
+        // Round down the highest damage to the nearest 100,000,000
+        final roundedHighestDamage = (highestDamage ~/ 100000000) * 100000000;
+        if (currentDamage - roundedHighestDamage > 100000000) {
+          // Get the member's name
+          const memberNameQuery = '''
+            SELECT game_name FROM Members WHERE member_id = ?
+          ''';
+          final memberNameResult = await db.rawQuery(memberNameQuery, [memberId]);
+          final memberName = memberNameResult.first['game_name'] as String;
+
+          // Format damages with commas
+          final formattedHighestDamage = NumberFormat.decimalPattern().format(highestDamage);
+          final formattedCurrentDamage = NumberFormat.decimalPattern().format(currentDamage);
+
+          // Add to the list
+          membersToUpdate.add([
+            memberName,
+            formattedHighestDamage.toString(),
+            '=>',
+            formattedCurrentDamage.toString()
+          ]);
+          memberCount++;
+        }
+      }
+      else{
+        if (currentDamage > highestDamage) {
+          // Get the member's name
+          const memberNameQuery = '''
+            SELECT game_name FROM Members WHERE member_id = ?
+          ''';
+          final memberNameResult = await db.rawQuery(memberNameQuery, [memberId]);
+          final memberName = memberNameResult.first['game_name'] as String;
+
+          // Format damages with commas
+          final formattedHighestDamage = NumberFormat.decimalPattern().format(highestDamage);
+          final formattedCurrentDamage = NumberFormat.decimalPattern().format(currentDamage);
+
+          // Add to the list
+          membersToUpdate.add([
+            memberName,
+            formattedHighestDamage.toString(),
+            '=>',
+            formattedCurrentDamage.toString()
+          ]);
+          memberCount++;
+        }
+      }
+    }
+  membersToUpdate.add(["Members count: $memberCount"]);
+  // Step 7: Return the list of members to update
+  return membersToUpdate;
   }
 }

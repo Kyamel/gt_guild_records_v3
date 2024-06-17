@@ -957,7 +957,7 @@ class DatabasePage extends StatelessWidget {
                     int result = 0;
                     try{
                       await databaseManager.updateMemberInRaid(int.tryParse(keyN.text) ?? -1, int.tryParse(keyT.text) ?? -1,
-                       newDamage: int.tryParse(newDamage.text), newParticipation: int.tryParse(newParticipation.text));
+                       newDamage: int.tryParse(newDamage.text), newParticipation: (newParticipation.text));
                     }catch(e){
                       result = -1;
                     }

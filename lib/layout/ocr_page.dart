@@ -415,45 +415,52 @@ class _OcrPageState extends State<OcrPage> {
                     onPressed: () {
                       _showAddRaidDialog(context);
                     },
-                    child:  const Icon(Icons.add),
+                    child:  const Icon(Icons.settings),
                   ),
-                  Container(
-                    decoration: BoxDecoration(
-                      borderRadius: BorderRadius.circular(16.0),
-                      color: Theme.of(context).colorScheme.primaryContainer,
-                      boxShadow: [
-                        BoxShadow(
-                          color: Colors.black.withOpacity(0.3),
-                          spreadRadius: 1,
-                          blurRadius: 6,
-                          offset: const Offset(0, 3), // changes position of shadow
-                        ),
-                      ],
-                    ),  
-                    child: SizedBox(
-                      width: 180,
-                      child: _isProcessing ? const Column(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            CircularProgressIndicator(),
-                            Text('Processing image...'),
-                          ],
-                        )
-                        : _isScaning ? const Column(
+                  GestureDetector(
+                    onVerticalDragEnd: (details) {
+                      if (details.primaryVelocity! < 0) {
+                        _pickImage(); // Chama o método ao deslizar para cima
+                      }
+                    },
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(16.0),
+                        color: Theme.of(context).colorScheme.primaryContainer,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withOpacity(0.3),
+                            spreadRadius: 1,
+                            blurRadius: 6,
+                            offset: const Offset(0, 3), // changes position of shadow
+                          ),
+                        ],
+                      ),  
+                      child: SizedBox(
+                        width: 180,
+                        child: _isProcessing ? const Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               CircularProgressIndicator(),
-                              Text('Scanning image...'),
+                              Text('Processing image...'),
                             ],
                           )
-                        : Padding(
-                          padding: const EdgeInsets.all(4.0),
-                          child: TextButton.icon(
-                            onPressed: _pickImage,
-                            icon: const Icon(Icons.image),
-                            label: const Text('Select Image'),
+                          : _isScaning ? const Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                CircularProgressIndicator(),
+                                Text('Scanning image...'),
+                              ],
+                            )
+                          : Padding(
+                            padding: const EdgeInsets.all(4.0),
+                            child: TextButton.icon(
+                              onPressed: _pickImage,
+                              icon: const Icon(Icons.image),
+                              label: const Text('Select Image'),
+                            ),
                           ),
-                        ),
+                      ),
                     ),
                   ),  
                   FloatingActionButton(

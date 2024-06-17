@@ -26,6 +26,7 @@ class PrintPageState extends State<PrintPage> {
   double buttonWidth = 180;
   bool _isSnackbarVisible = false;
   bool _filterActive = false;
+  bool _updateBadges = false;
 
   @override
   void didChangeDependencies() {
@@ -138,9 +139,23 @@ class PrintPageState extends State<PrintPage> {
     }
   }
   void _updateAcumulatedDamageRanking()async{
-     try{
+    try{
       final newData = await widget.databaseManager.getAccumulatedDamageRanking();
 
+      setState(() {
+        _data = newData;
+        showRaidInfoButton = false;
+        showMemberInfoButtom = false;
+        showBackToRaidsButton = false;
+        showBackToMembersButton = false;
+      });
+    }catch(e){
+      debugPrint("Erro members in raids: $e");
+    }
+  }
+  void _badgesToUpdate(bool badgesToUpdate) async{
+    try{
+      final newData = await widget.databaseManager.membersToUpdateBadges(onlyBadgesToUpdate: badgesToUpdate);
       setState(() {
         _data = newData;
         showRaidInfoButton = false;
@@ -236,25 +251,30 @@ class PrintPageState extends State<PrintPage> {
                   width: buttonWidth,
                   child:ElevatedButton.icon(
                     onPressed: () => _updateTopDamageRanking(_filterActive),
-                    icon: PopupMenuButton<bool>(
-                      icon: const Icon(Icons.settings),
-                      onSelected: (bool result) {
-                        setState(() {
-                          _filterActive = result;
-                        });
-                      },
-                      itemBuilder: (BuildContext context) => [
-                        CheckedPopupMenuItem<bool>(
-                          value: false,
-                          checked: !_filterActive,
-                          child: const Text('All Members'),
-                        ),
-                        CheckedPopupMenuItem<bool>(
-                          value: true,
-                          checked: _filterActive,
-                          child: const Text('Active Members'),
-                        ),
-                      ],
+                    icon: Container(
+                      width: 32, // Defina um tamanho fixo para o Container
+                      height: 48, // Defina um tamanho fixo para o Container
+                      alignment: Alignment.center, // Alinha o conteúdo ao centro
+                      child: PopupMenuButton<bool>(
+                        icon: const Icon(Icons.settings),
+                        onSelected: (bool result) {
+                          setState(() {
+                            _filterActive = result;
+                          });
+                        },
+                        itemBuilder: (BuildContext context) => [
+                          CheckedPopupMenuItem<bool>(
+                            value: false,
+                            checked: !_filterActive,
+                            child: const Text('All Members'),
+                          ),
+                          CheckedPopupMenuItem<bool>(
+                            value: true,
+                            checked: _filterActive,
+                            child: const Text('Active Members'),
+                          ),
+                        ],
+                      ),
                     ),
                     label: const Text('Best Damages'),
                   ),
@@ -284,7 +304,7 @@ class PrintPageState extends State<PrintPage> {
                   ),
                 ),
               ),
-               Padding(
+              Padding(
                 padding: const EdgeInsets.all(8.0),
                 child: SizedBox(
                   height: buttonHeight,
@@ -292,7 +312,44 @@ class PrintPageState extends State<PrintPage> {
                   child: ElevatedButton.icon(
                     onPressed: _updateAcumulatedDamageRanking,
                     icon: const Icon(Icons.format_list_numbered),
-                    label: const Text('Acumulated damages'),
+                    label: const Text('Acumulated Damages'),
+                  ),
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(8.0),
+                child: SizedBox(
+                  height: buttonHeight,
+                  width: buttonWidth,
+                  child: ElevatedButton.icon(
+                    onPressed: () => _badgesToUpdate(_updateBadges),
+                    icon: Container(
+                      width: 24, // Defina um tamanho fixo para o Container
+                      height: 24, // Defina um tamanho fixo para o Container
+                      alignment: Alignment.center, // Alinha o conteúdo ao centro
+                      child: PopupMenuButton<bool>(
+                        padding: EdgeInsets.zero, // Remove qualquer padding
+                        icon: const Icon(Icons.settings),
+                        onSelected: (bool result) {
+                          setState(() {
+                            _updateBadges = result;
+                          });
+                        },
+                        itemBuilder: (BuildContext context) => [
+                          CheckedPopupMenuItem<bool>(
+                            value: false,
+                            checked: !_updateBadges,
+                            child: const Text('All improvements'),
+                          ),
+                          CheckedPopupMenuItem<bool>(
+                            value: true,
+                            checked: _updateBadges,
+                            child: const Text('Only badges to update'),
+                          ),
+                        ],
+                      ),
+                    ),
+                    label: const Text('Improvements'),
                   ),
                 ),
               ),
